@@ -21,7 +21,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { label: "Merchants", href: "/dashboard/merchants", icon: Store },
   { label: "Subscriptions", href: "/dashboard", icon: CreditCard, badge: "Soon", disabled: true },
-  { label: "Master catalog", href: "/dashboard", icon: Boxes, badge: "Soon", disabled: true },
+  { label: "Categories", href: "/dashboard/categories", icon: Boxes },
   { label: "Customers", href: "/dashboard", icon: Users, badge: "Soon", disabled: true },
   { label: "Reports", href: "/dashboard", icon: BarChart3, badge: "Soon", disabled: true },
   { label: "Settings", href: "/dashboard", icon: Settings, badge: "Soon", disabled: true },
