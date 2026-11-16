@@ -170,6 +170,18 @@ export type MasterProductFormSource = {
   isActive: boolean;
 };
 
+/** Primary or first gallery image URL from a list/detail payload. */
+export function resolveMasterProductImageUrl(product: MasterProduct): string | null {
+  const fromPrimary = product.primary_image?.image_url?.trim();
+  if (fromPrimary) {
+    return fromPrimary;
+  }
+  const images = product.images ?? [];
+  const primary = images.find((image) => image.is_primary);
+  const url = primary?.image_url?.trim() ?? images[0]?.image_url?.trim();
+  return url || null;
+}
+
 export function masterProductToFormSource(product: MasterProduct): MasterProductFormSource {
   return {
     id: product.id,

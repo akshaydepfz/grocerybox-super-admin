@@ -6,8 +6,9 @@ import { useEffect, useReducer, useState } from "react";
 
 import { WidgetCard } from "@/components/dashboard/WidgetCard";
 import { Button } from "@/components/ui/Button";
+import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { listMasterProducts, MasterProductServiceError } from "@/services/master-product-service";
-import type { MasterProduct } from "@/types/master-product";
+import { resolveMasterProductImageUrl, type MasterProduct } from "@/types/master-product";
 import { cn } from "@/utils/cn";
 
 const selectClassName =
@@ -136,7 +137,7 @@ export function ProductsList() {
           <table className="min-w-full text-left text-sm">
             <thead>
               <tr className="border-b border-zinc-100 bg-zinc-50/60 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                <th className="px-5 py-3">Name</th>
+                <th className="px-5 py-3">Product</th>
                 <th className="px-4 py-3">Category</th>
                 <th className="px-4 py-3">Price</th>
                 <th className="px-4 py-3">Stock</th>
@@ -152,7 +153,20 @@ export function ProductsList() {
               ) : null}
               {items.map((product) => (
                 <tr key={product.id} className="border-b border-zinc-100 hover:bg-zinc-50/70">
-                  <td className="px-5 py-4 font-medium text-zinc-900">{product.name}</td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <ProductThumbnail
+                        imageUrl={resolveMasterProductImageUrl(product)}
+                        name={product.name}
+                      />
+                      <div className="min-w-0">
+                        <p className="font-medium text-zinc-900">{product.name}</p>
+                        {product.brand ? (
+                          <p className="mt-0.5 truncate text-xs text-zinc-500">{product.brand}</p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </td>
                   <td className="px-4 py-4 text-zinc-600">{product.category_name ?? "—"}</td>
                   <td className="px-4 py-4 text-zinc-600">₹{product.selling_price}</td>
                   <td className="px-4 py-4 text-zinc-600">{product.stock_quantity}</td>

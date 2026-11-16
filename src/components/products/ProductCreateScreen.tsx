@@ -74,16 +74,27 @@ export function ProductCreateScreen() {
     const uploaded = [...images];
     try {
       for (let i = 0; i < uploaded.length; i++) {
-        if (uploaded[i].uploadedUrl) continue;
-        const result = await uploadMasterProductImage({
-          file: uploaded[i].file,
-          onProgress: (ratio) => {
-            uploaded[i] = { ...uploaded[i], uploadProgress: ratio };
-            setImages([...uploaded]);
-          },
-        });
-        uploaded[i] = { ...uploaded[i], uploadProgress: 1, uploadedUrl: result.imageUrl };
-        setImages([...uploaded]);
+        if (uploaded[i].uploadedUrl) {
+          continue;
+        }
+        try {
+          const result = await uploadMasterProductImage({
+            file: uploaded[i].file,
+            onProgress: (ratio) => {
+              uploaded[i] = { ...uploaded[i], uploadProgress: ratio };
+              setImages([...uploaded]);
+            },
+          });
+          uploaded[i] = { ...uploaded[i], uploadProgress: 1, uploadedUrl: result.imageUrl };
+          setImages([...uploaded]);
+        } catch (uploadErr) {
+          const message = friendlyProductImageUploadMessage(uploadErr);
+          uploaded[i] = { ...uploaded[i], uploadError: message };
+          setImages([...uploaded]);
+          setImagesError("Some images failed to upload.");
+          setFormError(message);
+          return;
+        }
       }
 
       const createPayload: MasterProductCreatePayload = { ...payload, unit: payload.unit };
@@ -100,8 +111,11 @@ export function ProductCreateScreen() {
             : null,
         )
         .filter((item): item is NonNullable<typeof item> => item != null);
-      if (assoc.length > 0) await associateMasterProductImages(product.id, assoc);
+      if (assoc.length > 0) {
+        await associateMasterProductImages(product.id, assoc);
+      }
       router.push("/dashboard/products");
+      router.refresh();
     } catch (err) {
       setFormError(
         err instanceof MasterProductServiceError
