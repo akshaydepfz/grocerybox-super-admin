@@ -4,13 +4,17 @@ import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { isAuthStackConfigured } from "@/config/env";
-import { AuthServiceError } from "@/types/auth";
-import { signInSuperAdmin, sendPasswordReset } from "@/services/auth-service";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { isAuthStackConfigured } from "@/config/env";
+import { signInSuperAdmin, sendPasswordReset } from "@/services/auth-service";
+import { AuthServiceError } from "@/types/auth";
+import { cn } from "@/utils/cn";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const inputFieldClass =
+  "w-full rounded-md border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
 
 export function LoginForm() {
   const router = useRouter();
@@ -33,15 +37,15 @@ export function LoginForm() {
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail) {
-      next.email = "Email is required.";
+      next.email = "Required";
     } else if (!EMAIL_PATTERN.test(trimmedEmail)) {
-      next.email = "Enter a valid email address.";
+      next.email = "Invalid email";
     }
 
     if (!password) {
-      next.password = "Password is required.";
+      next.password = "Required";
     } else if (password.length < 6) {
-      next.password = "Password must be at least 6 characters.";
+      next.password = "Too short";
     }
 
     setFieldErrors(next);
@@ -54,9 +58,7 @@ export function LoginForm() {
     setResetMessage(null);
 
     if (!configured) {
-      setFormError(
-        "Authentication is not fully configured. Set NEXT_PUBLIC_API_BASE_URL and Firebase env variables.",
-      );
+      setFormError("Sign-in is disabled until API and Firebase env vars are set.");
       return;
     }
 
@@ -89,15 +91,12 @@ export function LoginForm() {
     setFormError(null);
     setResetMessage(null);
     if (!email.trim()) {
-      setFieldErrors((prev) => ({
-        ...prev,
-        email: "Enter your email address to reset your password.",
-      }));
+      setFieldErrors((prev) => ({ ...prev, email: "Enter email first" }));
       return;
     }
     try {
       await sendPasswordReset(email);
-      setResetMessage("Password reset email sent. Check your inbox.");
+      setResetMessage("Reset email sent.");
     } catch (error) {
       setFormError(
         error instanceof AuthServiceError ? error.message : "Unable to send reset email.",
@@ -106,49 +105,19 @@ export function LoginForm() {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="w-full space-y-6"
-      noValidate
-    >
-      <div className="space-y-2">
-        <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-          Welcome back
-        </h2>
-        <p className="text-sm text-forest-300 sm:text-base">
-          Sign in to access your administration dashboard.
-        </p>
-      </div>
-
-      {!configured ? (
-        <div
-          className="rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
-          role="status"
-        >
-          Configure <code className="text-amber-50">NEXT_PUBLIC_API_BASE_URL</code> and Firebase
-          web credentials in <code className="text-amber-50">.env.local</code> to enable sign-in.
-          Platform admin access uses Firebase ID tokens with the{" "}
-          <code className="text-amber-50">platformAdmin</code> claim (no dedicated backend login
-          endpoint).
-        </div>
-      ) : null}
+    <form onSubmit={handleSubmit} className="w-full space-y-5" noValidate>
+      <h1 className="text-xl font-semibold tracking-tight text-zinc-900">Sign in</h1>
 
       {formError ? (
-        <div
-          className="rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-100"
-          role="alert"
-        >
+        <p className="text-sm text-red-600" role="alert">
           {formError}
-        </div>
+        </p>
       ) : null}
 
       {resetMessage ? (
-        <div
-          className="rounded-xl border border-lime-400/30 bg-lime-400/10 px-4 py-3 text-sm text-lime-100"
-          role="status"
-        >
+        <p className="text-sm text-brand-700" role="status">
           {resetMessage}
-        </div>
+        </p>
       ) : null}
 
       <div className="space-y-4">
@@ -157,7 +126,7 @@ export function LoginForm() {
           type="email"
           autoComplete="email"
           inputMode="email"
-          label="Email address"
+          label="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           error={fieldErrors.email}
@@ -166,10 +135,7 @@ export function LoginForm() {
         />
 
         <div className="space-y-2">
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-forest-100"
-          >
+          <label htmlFor="password" className="block text-sm font-medium text-zinc-700">
             Password
           </label>
           <div className="relative">
@@ -181,59 +147,48 @@ export function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
-              placeholder="••••••••"
               aria-invalid={Boolean(fieldErrors.password)}
-              className="w-full rounded-xl border border-forest-700/80 bg-forest-950/60 px-4 py-3 pr-12 text-sm text-white placeholder:text-forest-400 shadow-inner transition-colors focus:border-lime-400/70 focus:outline-none focus:ring-2 focus:ring-lime-400/30"
+              className={cn(inputFieldClass, "pr-10", fieldErrors.password && "border-red-400 focus:border-red-500 focus:ring-red-500/20")}
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-forest-400 transition-colors hover:text-forest-200"
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400 hover:text-zinc-600"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </button>
           </div>
           {fieldErrors.password ? (
-            <p className="text-xs text-red-300" role="alert">
+            <p className="text-xs text-red-600" role="alert">
               {fieldErrors.password}
             </p>
           ) : null}
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-4 text-sm">
-        <label className="flex items-center gap-2 text-forest-200">
+      <div className="flex items-center justify-between text-sm">
+        <label className="flex cursor-pointer items-center gap-2 text-zinc-600">
           <input
             type="checkbox"
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
-            className="size-4 rounded border-forest-600 bg-forest-950 text-lime-400 focus:ring-lime-400/40"
+            className="size-4 rounded border-zinc-300 text-brand-600 focus:ring-brand-500/30"
           />
           Remember me
         </label>
         <button
           type="button"
           onClick={handleForgotPassword}
-          className="font-medium text-lime-300 transition-colors hover:text-lime-200"
+          className="font-medium text-brand-700 hover:text-brand-800"
         >
           Forgot password?
         </button>
       </div>
 
-      <Button
-        type="submit"
-        className="w-full"
-        size="lg"
-        loading={loading}
-        disabled={!configured}
-      >
-        Sign In
+      <Button type="submit" className="w-full" size="lg" loading={loading} disabled={!configured}>
+        Continue
       </Button>
-
-      <p className="text-center text-xs text-forest-500">
-        Protected access · GroceryBox Administration
-      </p>
     </form>
   );
 }
