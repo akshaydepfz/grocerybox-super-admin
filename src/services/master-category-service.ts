@@ -76,6 +76,9 @@ export async function createMasterCategory(
   }
 
   const body: MasterCategoryCreateInput = { name };
+  if (input.image_url !== undefined) {
+    body.image_url = input.image_url;
+  }
   if (input.display_order != null) {
     body.display_order = input.display_order;
   }

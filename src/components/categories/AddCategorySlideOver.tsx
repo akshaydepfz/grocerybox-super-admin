@@ -3,13 +3,22 @@
 import { X } from "lucide-react";
 import { useEffect, useId, useState, type FormEvent } from "react";
 
+import {
+  CategoryImageUpload,
+  emptyCategoryImageField,
+  type CategoryImageFieldValue,
+} from "@/components/categories/CategoryImageUpload";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import {
+  friendlyCategoryImageUploadMessage,
+  uploadMasterCategoryImage,
+} from "@/services/master-category-image-upload-service";
 import {
   createMasterCategory,
   MasterCategoryServiceError,
 } from "@/services/master-category-service";
-import { cn } from "@/utils/cn";
+import { revokeCategoryPreview } from "@/utils/category-image-validator";
 
 type AddCategorySlideOverProps = {
   open: boolean;
@@ -20,18 +29,23 @@ type AddCategorySlideOverProps = {
 export function AddCategorySlideOver({ open, onClose, onCreated }: AddCategorySlideOverProps) {
   const titleId = useId();
   const [name, setName] = useState("");
-  const [displayOrder, setDisplayOrder] = useState("");
+  const [displayOrder, setDisplayOrder] = useState("0");
   const [isActive, setIsActive] = useState(true);
+  const [imageField, setImageField] = useState<CategoryImageFieldValue>(emptyCategoryImageField);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
+
+  const busy = submitting || uploadProgress != null;
 
   useEffect(() => {
     if (!open) {
       return;
     }
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !submitting) {
+      if (event.key === "Escape" && !busy) {
         onClose();
       }
     };
@@ -42,40 +56,76 @@ export function AddCategorySlideOver({ open, onClose, onCreated }: AddCategorySl
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = overflow;
     };
-  }, [open, onClose, submitting]);
+  }, [busy, onClose, open]);
 
   useEffect(() => {
     if (!open) {
       setName("");
-      setDisplayOrder("");
+      setDisplayOrder("0");
       setIsActive(true);
+      revokeCategoryPreview(imageField.previewUrl);
+      setImageField(emptyCategoryImageField());
+      setImageError(null);
+      setUploadProgress(null);
       setError(null);
       setNameError(null);
       setSubmitting(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset only when panel closes
   }, [open]);
+
+  useEffect(() => {
+    return () => {
+      revokeCategoryPreview(imageField.previewUrl);
+    };
+  }, [imageField.previewUrl]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
+    if (busy) {
+      return;
+    }
+
     const trimmed = name.trim();
     if (!trimmed) {
-      setNameError("Name is required.");
+      setNameError("Category name is required.");
       return;
     }
     setNameError(null);
-    setError(null);
+
+    const order = Number.parseInt(displayOrder, 10);
+    if (Number.isNaN(order) || order < 0) {
+      setError("Display order must be zero or greater.");
+      return;
+    }
+
     setSubmitting(true);
-    try {
-      const order = displayOrder.trim() ? Number(displayOrder) : undefined;
-      if (order != null && (!Number.isInteger(order) || order < 0)) {
-        setError("Display order must be a whole number of 0 or greater.");
+    setError(null);
+    setImageError(null);
+    setUploadProgress(null);
+
+    let imageUrl: string | null = null;
+    if (imageField.pendingFile) {
+      try {
+        const uploaded = await uploadMasterCategoryImage({
+          file: imageField.pendingFile,
+          onProgress: setUploadProgress,
+        });
+        imageUrl = uploaded.imageUrl;
+      } catch (uploadErr) {
+        setImageError(friendlyCategoryImageUploadMessage(uploadErr));
         setSubmitting(false);
+        setUploadProgress(null);
         return;
       }
+    }
+
+    try {
       await createMasterCategory({
         name: trimmed,
         display_order: order,
         is_active: isActive,
+        image_url: imageUrl,
       });
       onCreated();
       onClose();
@@ -87,6 +137,7 @@ export function AddCategorySlideOver({ open, onClose, onCreated }: AddCategorySl
       setError(message);
     } finally {
       setSubmitting(false);
+      setUploadProgress(null);
     }
   };
 
@@ -100,7 +151,7 @@ export function AddCategorySlideOver({ open, onClose, onCreated }: AddCategorySl
         type="button"
         className="absolute inset-0 bg-zinc-900/40 backdrop-blur-[1px]"
         onClick={() => {
-          if (!submitting) {
+          if (!busy) {
             onClose();
           }
         }}
@@ -118,13 +169,13 @@ export function AddCategorySlideOver({ open, onClose, onCreated }: AddCategorySl
               Add category
             </h2>
             <p className="mt-0.5 text-sm text-zinc-600">
-              Create a master catalogue category for merchants to pick from.
+              Categories group products on storefronts across the platform.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            disabled={submitting}
+            disabled={busy}
             className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 disabled:opacity-50"
             aria-label="Close"
           >
@@ -135,15 +186,27 @@ export function AddCategorySlideOver({ open, onClose, onCreated }: AddCategorySl
         <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-1 flex-col">
           <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
             <Input
-              label="Name"
+              label="Category name"
               name="category-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. Fruits & vegetables"
+              placeholder="Fruits & Vegetables"
               error={nameError ?? undefined}
               autoFocus
-              disabled={submitting}
+              disabled={busy}
               maxLength={255}
+            />
+
+            <CategoryImageUpload
+              value={imageField}
+              onChange={(next) => {
+                setImageError(null);
+                setImageField(next);
+              }}
+              uploadProgress={uploadProgress}
+              error={imageError}
+              disabled={busy}
+              onValidationError={(message) => setImageError(message)}
             />
 
             <Input
@@ -154,26 +217,26 @@ export function AddCategorySlideOver({ open, onClose, onCreated }: AddCategorySl
               step={1}
               value={displayOrder}
               onChange={(event) => setDisplayOrder(event.target.value)}
-              placeholder="0"
-              hint="Lower numbers appear first. Leave blank for default."
-              disabled={submitting}
+              hint="Lower numbers appear first."
+              disabled={busy}
             />
 
-            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-3">
+            <div className="flex items-center justify-between rounded-xl border border-zinc-200 px-3 py-2.5">
+              <div>
+                <p className="text-sm font-medium text-zinc-900">Active</p>
+                <p className="text-xs text-zinc-500">
+                  Inactive categories are hidden from storefront selection.
+                </p>
+              </div>
               <input
                 type="checkbox"
                 checked={isActive}
                 onChange={(event) => setIsActive(event.target.checked)}
-                disabled={submitting}
+                disabled={busy}
                 className="size-4 rounded border-zinc-300 text-brand-600 focus:ring-brand-500/30"
+                aria-label="Category is active"
               />
-              <span>
-                <span className="block text-sm font-medium text-zinc-800">Active</span>
-                <span className="block text-xs text-zinc-500">
-                  Inactive categories stay in the catalogue but are hidden from selection.
-                </span>
-              </span>
-            </label>
+            </div>
 
             {error ? (
               <p
@@ -186,11 +249,11 @@ export function AddCategorySlideOver({ open, onClose, onCreated }: AddCategorySl
           </div>
 
           <footer className="flex items-center justify-end gap-2 border-t border-zinc-100 px-5 py-4">
-            <Button type="button" variant="ghost" onClick={onClose} disabled={submitting}>
+            <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
               Cancel
             </Button>
             <Button type="submit" loading={submitting}>
-              Create category
+              {uploadProgress != null ? "Uploading…" : "Create category"}
             </Button>
           </footer>
         </form>

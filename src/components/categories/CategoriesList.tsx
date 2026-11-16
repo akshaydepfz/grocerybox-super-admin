@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Plus, RefreshCw, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImageIcon, Plus, RefreshCw, Search } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useReducer, useState } from "react";
 
 import { AddCategorySlideOver } from "@/components/categories/AddCategorySlideOver";
@@ -65,6 +66,31 @@ function listReducer(state: ListState, action: ListAction): ListState {
     default:
       return state;
   }
+}
+
+function CategoryListAvatar({
+  name,
+  imageUrl,
+}: {
+  name: string;
+  imageUrl?: string;
+}) {
+  const url = imageUrl?.trim();
+  if (url) {
+    return (
+      <div className="relative size-11 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+        <Image src={url} alt="" fill className="object-cover" sizes="44px" unoptimized />
+      </div>
+    );
+  }
+  return (
+    <div
+      className="flex size-11 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-400"
+      title={name}
+    >
+      <ImageIcon className="size-5" aria-hidden />
+    </div>
+  );
 }
 
 function ActiveBadge({ active }: { active: boolean }) {
@@ -231,8 +257,9 @@ export function CategoriesList() {
           <table className="min-w-full text-left text-sm">
             <thead>
               <tr className="border-b border-zinc-100 bg-zinc-50/60 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                <th className="px-5 py-3">Name</th>
-                <th className="px-4 py-3">Slug</th>
+                <th className="px-5 py-3">Image</th>
+                <th className="px-4 py-3">Name</th>
+                <th className="hidden px-4 py-3 sm:table-cell">Slug</th>
                 <th className="px-4 py-3">Order</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-5 py-3">Created</th>
@@ -241,7 +268,7 @@ export function CategoriesList() {
             <tbody>
               {loading && items.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-zinc-500">
+                  <td colSpan={6} className="px-5 py-12 text-center text-zinc-500">
                     Loading categories…
                   </td>
                 </tr>
@@ -249,7 +276,7 @@ export function CategoriesList() {
 
               {!loading && items.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-zinc-500">
+                  <td colSpan={6} className="px-5 py-12 text-center text-zinc-500">
                     No categories match your filters.
                   </td>
                 </tr>
@@ -260,8 +287,18 @@ export function CategoriesList() {
                   key={category.id}
                   className="border-b border-zinc-100 transition-colors hover:bg-zinc-50/70"
                 >
-                  <td className="px-5 py-4 font-medium text-zinc-900">{category.name}</td>
-                  <td className="px-4 py-4 font-mono text-xs text-zinc-600">{category.slug}</td>
+                  <td className="px-5 py-4">
+                    <CategoryListAvatar name={category.name} imageUrl={category.image_url} />
+                  </td>
+                  <td className="px-4 py-4">
+                    <p className="font-medium text-zinc-900">{category.name}</p>
+                    <p className="mt-0.5 font-mono text-xs text-zinc-500 sm:hidden">
+                      /{category.slug}
+                    </p>
+                  </td>
+                  <td className="hidden px-4 py-4 font-mono text-xs text-zinc-600 sm:table-cell">
+                    /{category.slug}
+                  </td>
                   <td className="px-4 py-4 text-zinc-600">{category.display_order}</td>
                   <td className="px-4 py-4">
                     <ActiveBadge active={category.is_active} />

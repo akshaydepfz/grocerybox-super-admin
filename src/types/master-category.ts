@@ -25,6 +25,7 @@ export type MasterCategoryListParams = {
 
 export type MasterCategoryCreateInput = {
   name: string;
+  image_url?: string | null;
   display_order?: number;
   is_active?: boolean;
 };
