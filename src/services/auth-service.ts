@@ -59,9 +59,10 @@ export async function signOutSuperAdmin(): Promise<void> {
   }
 }
 
-export async function sendPasswordReset(_email: string): Promise<void> {
+export async function sendPasswordReset(email: string): Promise<void> {
+  const target = email.trim() || "this account";
   throw new AuthServiceError(
-    "Password reset is not available yet. Contact a platform administrator.",
+    `Password reset is not available for ${target}. Contact a platform administrator.`,
   );
 }
 

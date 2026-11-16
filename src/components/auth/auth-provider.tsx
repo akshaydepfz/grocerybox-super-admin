@@ -59,7 +59,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!configured) {
       return;
     }
-    void refreshSession();
+    let cancelled = false;
+    void (async () => {
+      const valid = await refreshSession();
+      if (cancelled) {
+        return;
+      }
+      if (!valid && !cancelled) {
+        setStatus("unauthenticated");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [configured, refreshSession]);
 
   const value = useMemo<AuthContextValue>(

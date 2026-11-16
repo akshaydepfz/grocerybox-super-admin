@@ -34,3 +34,9 @@ body {
     #f4f4f5 100%
   );
 }
+
+.dashboard-shell {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, color-mix(in srgb, var(--color-brand-100) 45%, transparent), transparent),
+    var(--color-background);
+}
