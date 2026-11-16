@@ -25,3 +25,12 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+.login-shell {
+  background: linear-gradient(
+    165deg,
+    var(--color-brand-50) 0%,
+    #ffffff 42%,
+    #f4f4f5 100%
+  );
+}

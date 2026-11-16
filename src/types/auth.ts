@@ -1,5 +1,3 @@
-import type { User } from "firebase/auth";
-
 /** Standard Go backend envelope. */
 export type ApiEnvelope<T = unknown> = {
   success: boolean;
@@ -7,11 +5,19 @@ export type ApiEnvelope<T = unknown> = {
   data?: T;
 };
 
-export type SuperAdminSession = {
-  user: User;
+export type SuperAdminProfile = {
+  id: string;
+  name: string;
   email: string;
-  uid: string;
-  isPlatformAdmin: true;
+  role: string;
+};
+
+export type SuperAdminSession = {
+  admin: SuperAdminProfile;
+};
+
+export type SuperAdminAuthPayload = {
+  admin: SuperAdminProfile;
 };
 
 export type LoginCredentials = {

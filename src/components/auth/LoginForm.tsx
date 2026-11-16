@@ -14,7 +14,7 @@ import { cn } from "@/utils/cn";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const inputFieldClass =
-  "w-full rounded-md border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
+  "w-full rounded-lg border border-zinc-200 bg-zinc-50/50 px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 transition-all focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/15";
 
 export function LoginForm() {
   const router = useRouter();
@@ -58,7 +58,7 @@ export function LoginForm() {
     setResetMessage(null);
 
     if (!configured) {
-      setFormError("Sign-in is disabled until API and Firebase env vars are set.");
+      setFormError("Sign-in is disabled until NEXT_PUBLIC_API_BASE_URL is set.");
       return;
     }
 
@@ -106,18 +106,27 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="w-full space-y-5" noValidate>
-      <h1 className="text-xl font-semibold tracking-tight text-zinc-900">Sign in</h1>
+      <div className="border-b border-zinc-100 pb-5 text-center">
+        <h1 className="text-lg font-semibold tracking-tight text-zinc-900">Sign in</h1>
+        <p className="mt-1 text-sm text-zinc-500">Platform administration</p>
+      </div>
 
       {formError ? (
-        <p className="text-sm text-red-600" role="alert">
+        <div
+          className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700"
+          role="alert"
+        >
           {formError}
-        </p>
+        </div>
       ) : null}
 
       {resetMessage ? (
-        <p className="text-sm text-brand-700" role="status">
+        <div
+          className="rounded-lg border border-brand-200 bg-brand-50 px-3.5 py-2.5 text-sm text-brand-800"
+          role="status"
+        >
           {resetMessage}
-        </p>
+        </div>
       ) : null}
 
       <div className="space-y-4">
@@ -132,9 +141,10 @@ export function LoginForm() {
           error={fieldErrors.email}
           placeholder="you@company.com"
           disabled={loading}
+          className="rounded-lg border-zinc-200 bg-zinc-50/50 focus:bg-white"
         />
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <label htmlFor="password" className="block text-sm font-medium text-zinc-700">
             Password
           </label>
@@ -148,12 +158,17 @@ export function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
               aria-invalid={Boolean(fieldErrors.password)}
-              className={cn(inputFieldClass, "pr-10", fieldErrors.password && "border-red-400 focus:border-red-500 focus:ring-red-500/20")}
+              className={cn(
+                inputFieldClass,
+                "pr-10",
+                fieldErrors.password &&
+                  "border-red-300 focus:border-red-500 focus:ring-red-500/15",
+              )}
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400 hover:text-zinc-600"
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400 transition-colors hover:text-zinc-600"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -180,13 +195,13 @@ export function LoginForm() {
         <button
           type="button"
           onClick={handleForgotPassword}
-          className="font-medium text-brand-700 hover:text-brand-800"
+          className="font-medium text-brand-700 transition-colors hover:text-brand-800"
         >
           Forgot password?
         </button>
       </div>
 
-      <Button type="submit" className="w-full" size="lg" loading={loading} disabled={!configured}>
+      <Button type="submit" className="w-full shadow-md shadow-brand-600/20" size="lg" loading={loading} disabled={!configured}>
         Continue
       </Button>
     </form>

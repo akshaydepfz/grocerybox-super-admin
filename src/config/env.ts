@@ -52,5 +52,5 @@ export function isFirebaseConfigured(): boolean {
 }
 
 export function isAuthStackConfigured(): boolean {
-  return isApiConfigured() && isFirebaseConfigured();
+  return isApiConfigured();
 }

@@ -1,10 +1,6 @@
 "use client";
 
 import {
-  onAuthStateChanged,
-  type User,
-} from "firebase/auth";
-import {
   createContext,
   useCallback,
   useContext,
@@ -15,19 +11,17 @@ import {
 } from "react";
 
 import { isAuthStackConfigured } from "@/config/env";
-import { setApiAuthTokenProvider } from "@/lib/api-client";
-import { getFirebaseAuth } from "@/lib/firebase/client";
 import {
-  getCurrentIdToken,
-  revalidatePlatformAdminSession,
+  revalidateSuperAdminSession,
   signOutSuperAdmin,
 } from "@/services/auth-service";
+import type { SuperAdminProfile } from "@/types/auth";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
 type AuthContextValue = {
   status: AuthStatus;
-  user: User | null;
+  admin: SuperAdminProfile | null;
   email: string | null;
   configured: boolean;
   signOut: () => Promise<void>;
@@ -41,65 +35,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>(() =>
     configured ? "loading" : "unauthenticated",
   );
-  const [user, setUser] = useState<User | null>(null);
+  const [admin, setAdmin] = useState<SuperAdminProfile | null>(null);
 
   const refreshSession = useCallback(async () => {
-    const valid = await revalidatePlatformAdminSession();
-    if (valid) {
-      setUser(getFirebaseAuth().currentUser);
+    const session = await revalidateSuperAdminSession();
+    if (session) {
+      setAdmin(session.admin);
       setStatus("authenticated");
-    } else {
-      setUser(null);
-      setStatus("unauthenticated");
+      return true;
     }
-    return valid;
+    setAdmin(null);
+    setStatus("unauthenticated");
+    return false;
   }, []);
 
   const signOut = useCallback(async () => {
     await signOutSuperAdmin();
-    setUser(null);
+    setAdmin(null);
     setStatus("unauthenticated");
   }, []);
 
   useEffect(() => {
-    setApiAuthTokenProvider(() => getCurrentIdToken());
-
     if (!configured) {
       return;
     }
-
-    const auth = getFirebaseAuth();
-    const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
-      if (!nextUser) {
-        setUser(null);
-        setStatus("unauthenticated");
-        return;
-      }
-
-      setStatus("loading");
-      const valid = await revalidatePlatformAdminSession();
-      if (valid) {
-        setUser(nextUser);
-        setStatus("authenticated");
-      } else {
-        setUser(null);
-        setStatus("unauthenticated");
-      }
-    });
-
-    return () => unsubscribe();
-  }, [configured]);
+    void refreshSession();
+  }, [configured, refreshSession]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       status,
-      user,
-      email: user?.email ?? null,
+      admin,
+      email: admin?.email ?? null,
       configured,
       signOut,
       refreshSession,
     }),
-    [configured, refreshSession, signOut, status, user],
+    [admin, configured, refreshSession, signOut, status],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

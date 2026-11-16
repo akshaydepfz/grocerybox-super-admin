@@ -18,6 +18,8 @@ export type ApiRequestOptions = {
   signal?: AbortSignal;
   timeoutMs?: number;
   authToken?: string | null;
+  /** When set, controls cookie sending (use `include` for super-admin session cookies). */
+  credentials?: RequestCredentials;
 };
 
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -83,7 +85,7 @@ async function request<T>(
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: controller.signal,
-      credentials: "omit",
+      credentials: options.credentials ?? "omit",
     });
 
     let envelope: ApiEnvelope<T> | null = null;
