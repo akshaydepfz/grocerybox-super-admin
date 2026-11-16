@@ -19,7 +19,7 @@ export type DashboardNavItem = {
 
 export const dashboardNavItems: DashboardNavItem[] = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Merchants", href: "/dashboard", icon: Store, badge: "Soon", disabled: true },
+  { label: "Merchants", href: "/dashboard/merchants", icon: Store },
   { label: "Subscriptions", href: "/dashboard", icon: CreditCard, badge: "Soon", disabled: true },
   { label: "Master catalog", href: "/dashboard", icon: Boxes, badge: "Soon", disabled: true },
   { label: "Customers", href: "/dashboard", icon: Users, badge: "Soon", disabled: true },

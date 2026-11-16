@@ -87,7 +87,11 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarP
         <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Dashboard">
           <ul className="space-y-1">
             {dashboardNavItems.map((item) => {
-              const active = !item.disabled && pathname === item.href && item.label === "Overview";
+              const active =
+                !item.disabled &&
+                (item.href === "/dashboard"
+                  ? pathname === "/dashboard"
+                  : pathname === item.href || pathname.startsWith(`${item.href}/`));
               const Icon = item.icon;
 
               if (item.disabled) {
