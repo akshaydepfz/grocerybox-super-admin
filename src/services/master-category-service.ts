@@ -5,6 +5,7 @@ import type {
   MasterCategoryCreateInput,
   MasterCategoryListParams,
   MasterCategoryListResponse,
+  MasterCategoryUpdateInput,
 } from "@/types/master-category";
 
 const CATEGORIES_BASE = "/api/super-admin/master-categories";
@@ -90,5 +91,72 @@ export async function createMasterCategory(
     return await apiClient.post<MasterCategory>(CATEGORIES_BASE, body, SESSION_FETCH);
   } catch (error) {
     throw mapApiError(error, "Unable to create category.");
+  }
+}
+
+export async function getMasterCategory(categoryId: string): Promise<MasterCategory> {
+  if (!isApiConfigured()) {
+    throw new MasterCategoryServiceError(
+      "API base URL is not configured. Set NEXT_PUBLIC_API_BASE_URL.",
+    );
+  }
+
+  const id = categoryId.trim();
+  if (!id) {
+    throw new MasterCategoryServiceError("Category id is required.");
+  }
+
+  try {
+    return await apiClient.get<MasterCategory>(
+      `${CATEGORIES_BASE}/${encodeURIComponent(id)}`,
+      SESSION_FETCH,
+    );
+  } catch (error) {
+    throw mapApiError(error, "Unable to load category.");
+  }
+}
+
+export async function updateMasterCategory(
+  categoryId: string,
+  input: MasterCategoryUpdateInput,
+): Promise<MasterCategory> {
+  if (!isApiConfigured()) {
+    throw new MasterCategoryServiceError(
+      "API base URL is not configured. Set NEXT_PUBLIC_API_BASE_URL.",
+    );
+  }
+
+  const id = categoryId.trim();
+  if (!id) {
+    throw new MasterCategoryServiceError("Category id is required.");
+  }
+
+  const name = input.name.trim();
+  if (!name) {
+    throw new MasterCategoryServiceError("Category name is required.");
+  }
+
+  const body: Record<string, unknown> = { name };
+  if (input.touch_image_url) {
+    body.image_url =
+      input.image_url != null && input.image_url.trim().length > 0
+        ? input.image_url.trim()
+        : "";
+  }
+  if (input.display_order != null) {
+    body.display_order = input.display_order;
+  }
+  if (input.is_active != null) {
+    body.is_active = input.is_active;
+  }
+
+  try {
+    return await apiClient.put<MasterCategory>(
+      `${CATEGORIES_BASE}/${encodeURIComponent(id)}`,
+      body,
+      SESSION_FETCH,
+    );
+  } catch (error) {
+    throw mapApiError(error, "Unable to update category.");
   }
 }

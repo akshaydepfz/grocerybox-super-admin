@@ -19,6 +19,7 @@ type UploadData = {
 
 export async function uploadMasterCategoryImage(options: {
   file: File;
+  categoryId?: string;
   onProgress?: (ratio: number) => void;
 }): Promise<{ imageUrl: string }> {
   if (!isApiConfigured()) {
@@ -29,13 +30,17 @@ export async function uploadMasterCategoryImage(options: {
   }
 
   const base = getApiBaseUrl()!;
+  const path = options.categoryId
+    ? `/api/super-admin/master-categories/${encodeURIComponent(options.categoryId)}/images`
+    : UPLOAD_PATH;
+
   const form = new FormData();
   form.append("image_type", "category");
   form.append("image", options.file, options.file.name);
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${base}${UPLOAD_PATH}`);
+    xhr.open("POST", `${base}${path}`);
     xhr.withCredentials = true;
 
     xhr.upload.onprogress = (event) => {

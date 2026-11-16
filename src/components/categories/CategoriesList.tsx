@@ -1,10 +1,10 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, ImageIcon, Plus, RefreshCw, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImageIcon, Pencil, Plus, RefreshCw, Search } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useReducer, useState } from "react";
 
-import { AddCategorySlideOver } from "@/components/categories/AddCategorySlideOver";
+import { CategoryFormSlideOver } from "@/components/categories/CategoryFormSlideOver";
 import { WidgetCard } from "@/components/dashboard/WidgetCard";
 import { Button } from "@/components/ui/Button";
 import {
@@ -109,7 +109,10 @@ function ActiveBadge({ active }: { active: boolean }) {
 export function CategoriesList() {
   const [listState, dispatch] = useReducer(listReducer, initialListState);
   const [refreshNonce, setRefreshNonce] = useState(0);
-  const [addOpen, setAddOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState<"create" | "edit">("create");
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [formSession, setFormSession] = useState(0);
 
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -184,7 +187,15 @@ export function CategoriesList() {
             Manage master catalogue categories used across the platform.
           </p>
         </div>
-        <Button type="button" onClick={() => setAddOpen(true)}>
+        <Button
+          type="button"
+          onClick={() => {
+            setFormMode("create");
+            setEditingCategoryId(null);
+            setFormSession((value) => value + 1);
+            setFormOpen(true);
+          }}
+        >
           <Plus className="size-4" aria-hidden />
           Add category
         </Button>
@@ -263,12 +274,13 @@ export function CategoriesList() {
                 <th className="px-4 py-3">Order</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-5 py-3">Created</th>
+                <th className="px-5 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading && items.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-zinc-500">
+                  <td colSpan={7} className="px-5 py-12 text-center text-zinc-500">
                     Loading categories…
                   </td>
                 </tr>
@@ -276,7 +288,7 @@ export function CategoriesList() {
 
               {!loading && items.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-zinc-500">
+                  <td colSpan={7} className="px-5 py-12 text-center text-zinc-500">
                     No categories match your filters.
                   </td>
                 </tr>
@@ -305,6 +317,22 @@ export function CategoriesList() {
                   </td>
                   <td className="px-5 py-4 text-zinc-600">
                     {formatDateTime(category.created_at)}
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        setFormMode("edit");
+                        setEditingCategoryId(category.id);
+                        setFormSession((value) => value + 1);
+                        setFormOpen(true);
+                      }}
+                    >
+                      <Pencil className="size-3.5" aria-hidden />
+                      Edit
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -342,10 +370,13 @@ export function CategoriesList() {
         </div>
       </WidgetCard>
 
-      <AddCategorySlideOver
-        open={addOpen}
-        onClose={() => setAddOpen(false)}
-        onCreated={() => setRefreshNonce((value) => value + 1)}
+      <CategoryFormSlideOver
+        key={formSession}
+        open={formOpen}
+        mode={formMode}
+        categoryId={editingCategoryId}
+        onClose={() => setFormOpen(false)}
+        onSaved={() => setRefreshNonce((value) => value + 1)}
       />
     </div>
   );

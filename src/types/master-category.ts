@@ -29,3 +29,12 @@ export type MasterCategoryCreateInput = {
   display_order?: number;
   is_active?: boolean;
 };
+
+export type MasterCategoryUpdateInput = {
+  name: string;
+  image_url?: string | null;
+  display_order?: number;
+  is_active?: boolean;
+  /** When true, `image_url` is applied (use empty string to clear). */
+  touch_image_url?: boolean;
+};
